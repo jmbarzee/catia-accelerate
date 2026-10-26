@@ -1,0 +1,43 @@
+Language="VBSCRIPT"
+' Skeleton.CATScript
+' Minimal CATScript with document-type check and error handling.
+' Copy, rename, fill in DoWork.
+
+Option Explicit
+
+Sub CATMain()
+    Dim doc
+    On Error Resume Next
+    Set doc = CATIA.ActiveDocument
+    If Err.Number <> 0 Or doc Is Nothing Then
+        MsgBox "Open a document first.", vbExclamation, "Skeleton"
+        Exit Sub
+    End If
+    On Error GoTo 0
+
+    Select Case TypeName(doc)
+        Case "ProductDocument"
+            DoWork doc
+        Case "PartDocument"
+            MsgBox "This macro expects a product (assembly), not a part.", vbExclamation, "Skeleton"
+        Case Else
+            MsgBox "Unsupported document type: " & TypeName(doc), vbExclamation, "Skeleton"
+    End Select
+End Sub
+
+Sub DoWork(doc)
+    CATIA.RefreshDisplay = False
+    On Error Resume Next
+
+    ' --- your code here ---
+    Dim prod
+    Set prod = doc.Product
+    MsgBox "Active product: " & prod.PartNumber & " with " & prod.Products.Count & " direct children."
+    ' ----------------------
+
+    If Err.Number <> 0 Then
+        MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical, "Skeleton"
+        Err.Clear
+    End If
+    CATIA.RefreshDisplay = True
+End Sub

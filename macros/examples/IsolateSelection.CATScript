@@ -1,0 +1,38 @@
+Language="VBSCRIPT"
+' IsolateSelection.CATScript
+' Hides every product/part in the active document except the ones currently selected.
+' Only show/hide state changes. Swap Visible Space or Ctrl+Z to undo.
+
+Option Explicit
+
+Sub CATMain()
+    Dim doc, sel, i, keep
+    Set doc = CATIA.ActiveDocument
+    If TypeName(doc) <> "ProductDocument" Then
+        MsgBox "Open a product (assembly).", vbExclamation
+        Exit Sub
+    End If
+    Set sel = doc.Selection
+    If sel.Count = 0 Then
+        MsgBox "Select one or more parts first.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Remember what was selected by full path name.
+    Set keep = CreateObject("Scripting.Dictionary")
+    For i = 1 To sel.Count
+        keep(sel.Item(i).Value.Name) = 1
+    Next
+
+    CATIA.RefreshDisplay = False
+    sel.Clear
+    sel.Search "Type=Product,all"   ' Products and Parts both match the Product type in Search
+    ' Remove the keepers from the selection, then hide what remains.
+    Dim n: n = sel.Count
+    For i = n To 1 Step -1
+        If keep.Exists(sel.Item(i).Value.Name) Then sel.Remove i
+    Next
+    If sel.Count > 0 Then sel.VisProperties.SetShow 1   ' catVisPropertyNoShowAttr = 1
+    sel.Clear
+    CATIA.RefreshDisplay = True
+End Sub

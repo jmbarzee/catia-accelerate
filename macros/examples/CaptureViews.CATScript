@@ -1,0 +1,33 @@
+Language="VBSCRIPT"
+' CaptureViews.CATScript
+' Saves iso, front, top, and right screenshots of the active window to a folder.
+' Read-only against the model.
+
+Option Explicit
+
+Sub CATMain()
+    Dim doc, folder, viewer, base
+    Set doc = CATIA.ActiveDocument
+    folder = InputBox("Folder to save PNGs:", "CaptureViews", doc.Path)
+    If folder = "" Then Exit Sub
+    base = Left(doc.Name, InStrRev(doc.Name, ".") - 1)
+    Set viewer = CATIA.ActiveWindow.ActiveViewer
+
+    ' Viewpoint3D.PutSightDirection takes an array (x, y, z). Iso is (-1,-1,-1) style.
+    Capture viewer, folder & "\" & base & "_iso.png",   Array(-1, -1, -1), Array(0, 0, 1)
+    Capture viewer, folder & "\" & base & "_front.png", Array(0, -1, 0),   Array(0, 0, 1)
+    Capture viewer, folder & "\" & base & "_top.png",   Array(0, 0, -1),   Array(0, 1, 0)
+    Capture viewer, folder & "\" & base & "_right.png", Array(-1, 0, 0),   Array(0, 0, 1)
+    MsgBox "Saved 4 images to " & folder, vbInformation, "CaptureViews"
+End Sub
+
+Sub Capture(viewer, path, sight, up)
+    Dim vp
+    Set vp = viewer.Viewpoint3D
+    vp.PutSightDirection sight
+    vp.PutUpDirection up
+    viewer.Update
+    viewer.Reframe
+    ' CatCaptureFormat: 0 = CGM, 1 = EMF, 2 = TIFF, 3 = TIFF greyscale, 4 = BMP, 5 = JPEG, 6 = PNG (verify in your release)
+    viewer.CaptureToFile 6, path
+End Sub

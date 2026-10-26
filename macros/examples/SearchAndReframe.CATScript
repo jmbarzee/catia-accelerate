@@ -1,0 +1,25 @@
+Language="VBSCRIPT"
+' SearchAndReframe.CATScript
+' Prompts for a name pattern, selects every match in the active document,
+' and reframes the 3D view on them. Read-only.
+
+Option Explicit
+
+Sub CATMain()
+    Dim doc, sel, pattern
+    Set doc = CATIA.ActiveDocument
+    pattern = InputBox("Name pattern (wildcards ok, e.g. *bracket*):", "SearchAndReframe", "*")
+    If pattern = "" Then Exit Sub
+
+    Set sel = doc.Selection
+    sel.Clear
+    ' Same query syntax as Edit > Search. "all" = whole document, "in" = active object.
+    sel.Search "Name=" & pattern & ",all"
+    If sel.Count = 0 Then
+        MsgBox "No matches for " & pattern, vbInformation
+        Exit Sub
+    End If
+    CATIA.ActiveWindow.ActiveViewer.Reframe
+    CATIA.StatusBar = sel.Count & " item(s) selected for " & pattern
+    MsgBox sel.Count & " item(s) selected. They stay selected; use Hide/Show or Reframe On from here.", vbInformation
+End Sub

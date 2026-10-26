@@ -1,0 +1,43 @@
+Language="VBSCRIPT"
+' SelectionHelper.CATScript
+' Two patterns for getting things from the user:
+'   1. Use what is already selected.
+'   2. Prompt the user to pick, with a type filter.
+
+Option Explicit
+
+Sub CATMain()
+    Dim doc, sel
+    Set doc = CATIA.ActiveDocument
+    Set sel = doc.Selection
+
+    ' Pattern 1: whatever is already selected
+    If sel.Count > 0 Then
+        MsgBox sel.Count & " item(s) already selected. First: " & sel.Item(1).Value.Name
+        Exit Sub
+    End If
+
+    ' Pattern 2: interactive pick. Filter is an array of automation type names.
+    ' Common filters: "Product", "Part", "Body", "Face", "Edge", "Vertex", "Plane", "AnyObject"
+    Dim filter(0)
+    filter(0) = "Product"
+    Dim status
+    status = sel.SelectElement2(filter, "Select a product or part (Esc to cancel)", False)
+    If status = "Cancel" Or status = "Undo" Or status = "Redo" Then
+        MsgBox "Cancelled."
+        Exit Sub
+    End If
+
+    Dim picked
+    Set picked = sel.Item(1).Value
+    MsgBox "You picked: " & picked.Name & " (" & TypeName(picked) & ")"
+End Sub
+
+' Pattern 3: select by query, same syntax as Edit > Search.
+' Examples:  "Name=*bolt*,all"   "Type=Part,all"   "Name=BRK*,in"   "Color='Red',all"
+Sub SelectByQuery(doc, query)
+    Dim sel
+    Set sel = doc.Selection
+    sel.Clear
+    sel.Search query
+End Sub

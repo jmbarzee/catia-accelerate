@@ -1,0 +1,35 @@
+Language="VBSCRIPT"
+' CountParts.CATScript
+' Counts instances and unique references in the active product. Read-only.
+
+Option Explicit
+
+Dim parts, products, refs
+
+Sub CATMain()
+    Dim doc
+    Set doc = CATIA.ActiveDocument
+    If TypeName(doc) <> "ProductDocument" Then
+        MsgBox "Open a product (assembly).", vbExclamation
+        Exit Sub
+    End If
+    parts = 0: products = 0
+    Set refs = CreateObject("Scripting.Dictionary")
+    Walk doc.Product
+    MsgBox "Part instances: " & parts & vbCrLf & _
+           "Sub-products: " & products & vbCrLf & _
+           "Unique part numbers: " & refs.Count, vbInformation, "CountParts"
+End Sub
+
+Sub Walk(prod)
+    Dim n, i
+    On Error Resume Next
+    n = prod.Products.Count
+    If Err.Number <> 0 Then n = 0: Err.Clear
+    On Error GoTo 0
+    If n = 0 Then parts = parts + 1 Else products = products + 1
+    If Not refs.Exists(prod.PartNumber) Then refs.Add prod.PartNumber, 1
+    For i = 1 To n
+        Walk prod.Products.Item(i)
+    Next
+End Sub

@@ -1,0 +1,39 @@
+Language="VBSCRIPT"
+' MeasureSelected.CATScript
+' Reports volume, area, and center of gravity for each selected item using the
+' SPAWorkbench Measurable object. Read-only. Values on Visualization Mode parts
+' are approximate (CGR based); put the part in Design Mode for exact results.
+
+Option Explicit
+
+Sub CATMain()
+    Dim doc, sel, spa, i, ref, m, cog(2), report
+    Set doc = CATIA.ActiveDocument
+    Set sel = doc.Selection
+    If sel.Count = 0 Then
+        MsgBox "Select one or more bodies, parts, or faces first.", vbExclamation
+        Exit Sub
+    End If
+    Set spa = doc.GetWorkbench("SPAWorkbench")
+    report = ""
+    On Error Resume Next
+    For i = 1 To sel.Count
+        Set ref = sel.Item(i).Reference
+        Set m = spa.GetMeasurable(ref)
+        If Err.Number <> 0 Then
+            report = report & sel.Item(i).Value.Name & ": not measurable" & vbCrLf
+            Err.Clear
+        Else
+            m.GetCOG cog
+            report = report & sel.Item(i).Value.Name & vbCrLf & _
+                     "   volume: " & Fmt(m.Volume) & "  area: " & Fmt(m.Area) & vbCrLf & _
+                     "   CoG: (" & Fmt(cog(0)) & ", " & Fmt(cog(1)) & ", " & Fmt(cog(2)) & ")" & vbCrLf
+            If Err.Number <> 0 Then Err.Clear
+        End If
+    Next
+    MsgBox report, vbInformation, "MeasureSelected (document units)"
+End Sub
+
+Function Fmt(v)
+    Fmt = FormatNumber(v, 3, -1, 0, 0)
+End Function

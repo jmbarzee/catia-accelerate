@@ -1,0 +1,21 @@
+# Per-user hookup: config, generated indexes, extracted CHM
+local/*
+!local/README.md
+!local/hookup.example.json
+!local/index/
+local/index/*
+!local/index/.gitkeep
+
+# Personal macro sandbox
+macros/scratch/*
+!macros/scratch/README.md
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+~$*
+*.swp
+__pycache__/
+
+# Claude Code per-user permissions
+.claude/settings.local.json

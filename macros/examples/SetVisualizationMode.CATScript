@@ -1,0 +1,29 @@
+Language="VBSCRIPT"
+' SetVisualizationMode.CATScript
+' Switches the active product and everything under it to Visualization Mode,
+' releasing Design Mode data from memory. Does not modify geometry.
+' Unsaved edits in Design Mode parts are NOT lost by this (the document stays open),
+' but save first anyway.
+
+Option Explicit
+
+Sub CATMain()
+    Dim doc
+    Set doc = CATIA.ActiveDocument
+    If TypeName(doc) <> "ProductDocument" Then
+        MsgBox "Open a product (assembly).", vbExclamation
+        Exit Sub
+    End If
+    If MsgBox("Switch the whole product to Visualization Mode?", vbYesNo + vbQuestion, "SetVisualizationMode") <> vbYes Then Exit Sub
+
+    ' catVisualizationMode = 1, catDesignMode = 0 (CatWorkModeType)
+    On Error Resume Next
+    CATIA.RefreshDisplay = False
+    doc.Product.ApplyWorkMode 1
+    CATIA.RefreshDisplay = True
+    If Err.Number <> 0 Then
+        MsgBox "Failed: " & Err.Description & vbCrLf & "Is the cache enabled? See quickref/03-large-assemblies.md", vbCritical
+    Else
+        MsgBox "Done. Right-click a part > Representations > Design Mode to edit one.", vbInformation
+    End If
+End Sub

@@ -1,0 +1,18 @@
+{
+  "_comment": "Copy to local/hookup.json and edit. Backslashes must be doubled in JSON.",
+  "catia": {
+    "install_path": "",
+    "release": "",
+    "automation_chm": "",
+    "user_settings_path": "",
+    "env_dir": ""
+  },
+  "roots": {
+    "macros": [],
+    "docs": [],
+    "templates": [],
+    "settings": []
+  },
+  "exclude": ["**/.git/**", "**/archive/**", "**/~$*"],
+  "max_files_per_root": 20000
+}

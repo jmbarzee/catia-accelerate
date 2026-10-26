@@ -1,0 +1,64 @@
+Language="VBSCRIPT"
+' ExportTreeToCsv.CATScript
+' Walks the active product and writes one row per instance:
+'   depth, part number, instance name, kind (Part|Product), source, file path
+' Read-only. Works in Visualization Mode.
+
+Option Explicit
+
+Dim fso, out, rows
+
+Sub CATMain()
+    Dim doc
+    Set doc = CATIA.ActiveDocument
+    If TypeName(doc) <> "ProductDocument" Then
+        MsgBox "Open a product (assembly).", vbExclamation
+        Exit Sub
+    End If
+
+    Dim path
+    path = InputBox("Write CSV to:", "ExportTreeToCsv", doc.Path & "\" & Left(doc.Name, InStrRev(doc.Name, ".") - 1) & "_tree.csv")
+    If path = "" Then Exit Sub
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set out = fso.CreateTextFile(path, True)
+    out.WriteLine "depth,part_number,instance_name,kind,source,file_path"
+    rows = 0
+    CATIA.RefreshDisplay = False
+    Walk doc.Product, 0
+    CATIA.RefreshDisplay = True
+    out.Close
+    MsgBox rows & " rows written to " & path
+End Sub
+
+Sub Walk(prod, depth)
+    Dim kind, src, fpath
+    On Error Resume Next
+    If prod.Products.Count = 0 Then kind = "Part" Else kind = "Product"
+    If Err.Number <> 0 Then kind = "Part": Err.Clear
+    src = SourceName(prod.Source)
+    fpath = prod.ReferenceProduct.Parent.FullName
+    If Err.Number <> 0 Then fpath = "": Err.Clear
+    On Error GoTo 0
+
+    out.WriteLine depth & "," & Q(prod.PartNumber) & "," & Q(prod.Name) & "," & kind & "," & src & "," & Q(fpath)
+    rows = rows + 1
+
+    Dim i
+    For i = 1 To prod.Products.Count
+        Walk prod.Products.Item(i), depth + 1
+    Next
+End Sub
+
+Function SourceName(code)
+    Select Case code
+        Case 0: SourceName = "Unknown"
+        Case 1: SourceName = "Made"
+        Case 2: SourceName = "Bought"
+        Case Else: SourceName = CStr(code)
+    End Select
+End Function
+
+Function Q(s)
+    Q = """" & Replace(s, """", """""") & """"
+End Function

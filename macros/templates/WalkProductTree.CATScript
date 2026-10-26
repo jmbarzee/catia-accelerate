@@ -1,0 +1,60 @@
+Language="VBSCRIPT"
+' WalkProductTree.CATScript
+' Recursive traversal of a product structure. Most assembly macros start here.
+' Works in Visualization Mode because it only reads the product structure.
+
+Option Explicit
+
+Dim visited
+
+Sub CATMain()
+    Dim doc
+    Set doc = CATIA.ActiveDocument
+    If TypeName(doc) <> "ProductDocument" Then
+        MsgBox "Open a product (assembly).", vbExclamation
+        Exit Sub
+    End If
+    Set visited = CreateObject("Scripting.Dictionary")
+    Walk doc.Product, 0
+    MsgBox "Visited " & visited.Count & " unique references. See the tree walk in your handler."
+End Sub
+
+Sub Walk(prod, depth)
+    ' Called once per instance. Do your per-node work here.
+    HandleNode prod, depth
+
+    ' Track unique references so you can tell instances from references.
+    Dim ref
+    On Error Resume Next
+    ref = prod.ReferenceProduct.PartNumber
+    If Err.Number <> 0 Then ref = prod.PartNumber: Err.Clear
+    On Error GoTo 0
+    If Not visited.Exists(ref) Then visited.Add ref, 1
+
+    Dim i
+    For i = 1 To prod.Products.Count
+        Walk prod.Products.Item(i), depth + 1
+    Next
+End Sub
+
+Sub HandleNode(prod, depth)
+    ' Example: print to the CATIA status bar. Replace with your logic.
+    Dim indent: indent = String(depth * 2, " ")
+    CATIA.StatusBar = indent & prod.PartNumber & " (" & prod.Name & ")"
+End Sub
+
+' Helpers you will want often ------------------------------------------------
+
+' Is this node a part (leaf) or a sub-product?
+Function IsPart(prod)
+    On Error Resume Next
+    IsPart = (prod.Products.Count = 0)
+    If Err.Number <> 0 Then IsPart = True: Err.Clear
+End Function
+
+' Full path of the file behind a node, or "" if not loaded / not file-based.
+Function NodeFilePath(prod)
+    On Error Resume Next
+    NodeFilePath = prod.ReferenceProduct.Parent.FullName
+    If Err.Number <> 0 Then NodeFilePath = "": Err.Clear
+End Function
